@@ -110,6 +110,7 @@ app.post('/api/create_link_token', function (request, response, next) {
       if (PLAID_ANDROID_PACKAGE_NAME !== '') {
         configs.android_package_name = PLAID_ANDROID_PACKAGE_NAME;
       }
+      console.log('Step 2: Request a Link token from the Plaid service')
       const createTokenResponse = await client.linkTokenCreate(configs);
       prettyPrintResponse(createTokenResponse);
       response.json(createTokenResponse.data);
@@ -181,15 +182,19 @@ app.post('/api/set_access_token', function (request, response, next) {
   PUBLIC_TOKEN = request.body.public_token;
   Promise.resolve()
     .then(async function () {
+      console.log(`Step 6a: Server exchanges public token for an access token`)
       const tokenResponse = await client.itemPublicTokenExchange({
         public_token: PUBLIC_TOKEN,
       });
       prettyPrintResponse(tokenResponse);
+      // TO DO: put this into a database, tie it to the authenticated user
       ACCESS_TOKEN = tokenResponse.data.access_token;
       ITEM_ID = tokenResponse.data.item_id;
       if (PLAID_PRODUCTS.includes('transfer')) {
         TRANSFER_ID = await authorizeAndCreateTransfer(ACCESS_TOKEN);
       }
+
+      // DONT ACTUALLY DO THIS! THE ACCESS TOKEN SHOULD STAY ON THE SERVER
       response.json({
         access_token: ACCESS_TOKEN,
         item_id: ITEM_ID,
